@@ -136,7 +136,7 @@ impl ScopeRepository {
         if s.is_empty() {
             return Ok(Scope { a: 0, b: 0 });
         }
-        let parts: Vec<usize> = s.trim_right_matches('.').split('.').map(|a| self.atom_to_index(a)).collect();
+        let parts: Vec<usize> = s.trim_end_matches('.').split('.').map(|a| self.atom_to_index(a)).collect();
         if parts.len() > 8 {
             return Err(ParseScopeError::TooManyAtoms);
         }
@@ -283,14 +283,14 @@ impl FromStr for Scope {
 }
 
 impl fmt::Display for Scope {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = self.build_string();
         write!(f, "{}", s)
     }
 }
 
 impl fmt::Debug for Scope {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = self.build_string();
         write!(f, "<{}>", s)
     }
@@ -311,7 +311,7 @@ impl<'de> Deserialize<'de> for Scope {
         impl<'de> Visitor<'de> for ScopeVisitor {
             type Value = Scope;
 
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                 formatter.write_str("a string")
             }
 
@@ -427,7 +427,7 @@ impl ScopeStack {
         for s in &self.scopes {
             print!("{} ", repo.to_string(*s));
         }
-        println!("");
+        println!();
     }
 
     /// Return the bottom n elements of the stack.
@@ -482,7 +482,7 @@ impl ScopeStack {
             if sel_scope.is_prefix_of(*scope) {
                 let len = sel_scope.len();
                 // equivalent to score |= len << (ATOM_LEN_BITS*i) on a large unsigned
-                score += (len as f64) * ((ATOM_LEN_BITS * (i as u16)) as f64).exp2();
+                score += f64::from(len) * f64::from(ATOM_LEN_BITS * (i as u16)).exp2();
                 sel_index += 1;
                 if sel_index >= self.scopes.len() {
                     return Some(MatchPower(score));
@@ -507,7 +507,7 @@ impl FromStr for ScopeStack {
 }
 
 impl fmt::Display for ScopeStack {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for s in &self.scopes {
             write!(f, "{} ", s)?;
         }
